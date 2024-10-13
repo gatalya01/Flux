@@ -23,22 +23,15 @@ public class TaskDTO {
     @NotBlank(message = "Title is mandatory")
     @Size(max = 100, message = "Title must be less than or equal to 100 characters")
     private String name;
-
     private String description;
-
     private Instant createdAt;
     private Instant updatedAt;
     private TaskStatus status;
-
     @NotNull(message = "Author ID is mandatory")
     private String authorId;
-
     @NotNull(message = "Assignee ID is mandatory")
     private String assigneeId;
-
     private Set<String> observerIds;
-
-
     private UserDTO author;
     private UserDTO assignee;
     private Set<UserDTO> observers;

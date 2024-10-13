@@ -2,13 +2,16 @@ package com.example.webflux_example.controller;
 
 import com.example.webflux_example.model.UserDTO;
 import com.example.webflux_example.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -27,7 +30,8 @@ public class UserController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserDTO> createUser(@RequestBody UserDTO userDto) {
         return userService.createUser(userDto);
     }

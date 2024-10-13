@@ -10,8 +10,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-
 @Component
 public class TaskHandler {
 
@@ -24,7 +22,6 @@ public class TaskHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(tasks, TaskDTO.class);
     }
-
     public Mono<ServerResponse> findTaskById(ServerRequest request) {
         String taskId = request.pathVariable("id");
         return taskService.findTaskById(taskId)

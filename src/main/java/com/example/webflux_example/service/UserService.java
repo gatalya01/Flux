@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Service
 @Slf4j
+@Service
 public class UserService {
     @Autowired
     private UserRepository userRepository;
@@ -22,20 +22,20 @@ public class UserService {
     public Flux<UserDTO> findAll() {
         log.info("Fetching all users");
         return userRepository.findAll()
-                .map(mapper::toDto);
+                .map(mapper::toDTO);
     }
 
     public Mono<UserDTO> finById(String id) {
         log.info(" User id: {}", id);
         return userRepository.findById(id)
-                .map(mapper::toDto);
+                .map(mapper::toDTO);
     }
 
     public Mono<UserDTO> createUser(UserDTO userDto) {
         log.info("User create");
-        UserEntity user = mapper.toEntity(userDto);
+        UserEntity user = mapper.toEntity(userDto); // Здесь должен быть создан UserEntity с заполненными полями
         return userRepository.save(user)
-                .map(mapper::toDto);
+                .map(mapper::toDTO); // Убедитесь, что mapper правильно отображает UserEntity на UserDTO
     }
 
     public Mono<UserDTO> updateUser(String id, UserDTO userDTO) {
@@ -46,7 +46,7 @@ public class UserService {
                     existingUser.setEmail(userDTO.getEmail());
                     return userRepository.save(existingUser);
                 })
-                .map(mapper::toDto);
+                .map(mapper::toDTO);
     }
 
     public Mono<Void> deleteUser(String id) {

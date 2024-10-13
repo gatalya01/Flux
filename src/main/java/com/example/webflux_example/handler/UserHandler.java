@@ -1,4 +1,5 @@
 package com.example.webflux_example.handler;
+
 import com.example.webflux_example.model.UserDTO;
 import com.example.webflux_example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import java.net.URI;
 
 @Component
 public class UserHandler {
-
     @Autowired
     private UserService userService;
 

@@ -8,6 +8,7 @@ import com.example.webflux_example.model.TaskDTO;
 import com.example.webflux_example.publisher.TaskUpdatePublisher;
 import com.example.webflux_example.repository.TaskRepository;
 import com.example.webflux_example.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -15,45 +16,52 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TaskService {
     @Autowired
-    private TaskUpdatePublisher taskUpdatePublisher;
-    @Autowired
     private TaskRepository taskRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private UserMapper userMapper;
+
     @Autowired
     private TaskMapper taskMapper;
 
     public Flux<TaskDTO> findAllTasks() {
         return taskRepository.findAll()
-                .flatMap(this::enrichTaskWithUsers);
+                .map(taskMapper::toDto);
     }
 
     public Mono<TaskDTO> findTaskById(String id) {
         return taskRepository.findById(id)
-                .flatMap(this::enrichTaskWithUsers);
+                .map(taskMapper::toDto);
     }
 
     private Mono<TaskDTO> enrichTaskWithUsers(TaskEntity task) {
-        Mono<UserEntity> authorMono = userRepository.findById(task.getAuthorId());
-        Mono<UserEntity> assigneeMono = userRepository.findById(task.getAssigneeId());
-        Flux<UserEntity> observersFlux = userRepository.findAllById(task.getObserverIds());
+        Mono<UserEntity> authorMono = userRepository.findById(task.getAuthorId())
+                .doOnError(error -> log.error("Error fetching author", error));
+        Mono<UserEntity> assigneeMono = userRepository.findById(task.getAssigneeId())
+                .doOnError(error -> log.error("Error fetching assignee", error));
+        Flux<UserEntity> observersFlux = userRepository.findAllById(task.getObserverIds())
+                .doOnError(error -> log.error("Error fetching observers", error));
 
         return Mono.zip(authorMono, assigneeMono, observersFlux.collectList())
                 .map(tuple -> {
-                    TaskDTO taskDto = taskMapper.toDto(task); // Map Task to TaskDTO
-                    taskDto.setAuthor(tuple.getT1() != null ? userMapper.toDto(tuple.getT1()) : null);
-                    taskDto.setAssignee(tuple.getT2() != null ? userMapper.toDto(tuple.getT2()) : null);
+                    TaskDTO taskDto = taskMapper.toDto(task);
+                    taskDto.setAuthor(tuple.getT1() != null ? userMapper.toDTO(tuple.getT1()) : null);
+                    taskDto.setAssignee(tuple.getT2() != null ? userMapper.toDTO(tuple.getT2()) : null);
                     taskDto.setObservers(new HashSet<>(tuple.getT3().stream()
-                            .map(userMapper::toDto)
+                            .map(userMapper::toDTO)
                             .toList()));
                     return taskDto;
-                });
+                })
+                .doOnError(error -> log.error("Error enriching task with users", error));
     }
 
     public Mono<TaskDTO> createTask(TaskDTO taskDTO) {
@@ -75,9 +83,6 @@ public class TaskService {
                     existingTask.setUpdatedAt(Instant.now());
                     return taskRepository.save(existingTask);
                 })
-                .doOnSuccess(updatedTask -> {
-                    taskUpdatePublisher.publish(taskMapper.toDto(updatedTask));
-                })
                 .map(taskMapper::toDto);
     }
 
@@ -92,5 +97,4 @@ public class TaskService {
 
     public Mono<Void> deleteTaskById(String id) {
         return taskRepository.deleteById(id);
-    }
-}
+    }}
